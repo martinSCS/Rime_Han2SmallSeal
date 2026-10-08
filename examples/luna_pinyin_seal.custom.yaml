@@ -1,0 +1,19 @@
+# Example: copy this file to luna_pinyin.custom.yaml to add small-seal output to
+# the existing luna_pinyin scheme.
+
+patch:
+  switches/+:
+    - name: seal_liding
+      reset: 1
+      states: [ 原字, 隸定 ]
+
+  engine/filters/@before 0: simplifier@seal_liding
+  engine/filters/@before 1: lua_filter@*seal_filter
+
+  seal_liding/opencc_config: seal_liding.json
+  seal_liding/option_name: seal_liding
+  seal_liding/tips: all
+
+  seal_filter/map_file: seal_map.tsv
+  seal_filter/single_char_variants: true
+  seal_filter/max_variants: 9
