@@ -167,6 +167,13 @@ local function liding_targets_for_text(text, map)
   return targets
 end
 
+local function add_unique(values, seen, value)
+  if value and value ~= "" and not seen[value] then
+    values[#values + 1] = value
+    seen[value] = true
+  end
+end
+
 local function convert_default(chars, map)
   local changed = false
   local out = {}
@@ -256,59 +263,70 @@ function M.func(input, env)
 
   for cand in input:iter() do
     local original_chars = collect_chars(cand.text)
-    local chars = apply_liding(original_chars, env.liding_map, env.liding_max_key_len or 0)
-    local liding_text = table.concat(chars)
-    local text, changed = convert_default(original_chars, map)
-    local original_changed = changed
-    local liding_changed = false
-    if not changed or liding_text ~= cand.text then
-      local liding_output
-      liding_output, liding_changed = convert_default(chars, map)
-      if not changed and liding_changed then
-        text = liding_output
-        changed = true
-      end
-    end
-    if changed then
-      local comment = build_comment(cand.comment, cand.text, original_changed and cand.text or liding_text)
-      local variants = nil
-      if env.single_char_variants and #original_chars == 1 then
-        variants = map[original_chars[1]]
+    local emitted_single = false
+    if env.single_char_variants and #original_chars == 1 then
+      local source_chars = {}
+      local seen_sources = {}
+      add_unique(source_chars, seen_sources, cand.text)
+      for _, liding_text in ipairs(liding_targets_for_text(cand.text, env.liding_map)) do
+        add_unique(source_chars, seen_sources, liding_text)
       end
 
-      if variants and #variants > 1 then
-        local limit = math.min(#variants, env.max_variants)
-        for index = 1, limit do
-          yield(Candidate(cand.type, cand.start, cand._end, variants[index], comment .. " " .. index .. "/" .. #variants))
-        end
-      else
-        yield(Candidate(cand.type, cand.start, cand._end, text, comment))
-      end
-
-      if env.single_char_variants and #original_chars == 1 then
-        for _, extra_liding_text in ipairs(liding_targets_for_text(cand.text, env.liding_map)) do
-          if original_changed or extra_liding_text ~= liding_text then
-            local extra_chars = collect_chars(extra_liding_text)
-            local extra_variants = nil
-            if #extra_chars == 1 then
-              extra_variants = map[extra_chars[1]]
-            end
-            if extra_variants then
-              local extra_comment = build_comment(cand.comment, cand.text, extra_liding_text)
-              local limit = math.min(#extra_variants, env.max_variants)
-              for index = 1, limit do
-                local suffix = ""
-                if #extra_variants > 1 then
-                  suffix = " " .. index .. "/" .. #extra_variants
-                end
-                yield(Candidate(cand.type, cand.start, cand._end, extra_variants[index], extra_comment .. suffix))
+      local seen_outputs = {}
+      for _, source_text in ipairs(source_chars) do
+        local source_char = collect_chars(source_text)[1]
+        local variants = source_char and map[source_char]
+        if variants then
+          local comment = build_comment(cand.comment, cand.text, source_text)
+          local limit = math.min(#variants, env.max_variants)
+          for index = 1, limit do
+            local variant = variants[index]
+            if not seen_outputs[variant] then
+              local suffix = ""
+              if #variants > 1 then
+                suffix = " " .. index .. "/" .. #variants
               end
+              yield(Candidate(cand.type, cand.start, cand._end, variant, comment .. suffix))
+              seen_outputs[variant] = true
+              emitted_single = true
             end
           end
         end
       end
-    else
-      yield(cand)
+    end
+
+    if not emitted_single then
+      local chars = apply_liding(original_chars, env.liding_map, env.liding_max_key_len or 0)
+      local liding_text = table.concat(chars)
+      local text, changed = convert_default(original_chars, map)
+      local original_changed = changed
+      local liding_changed = false
+      if not changed or liding_text ~= cand.text then
+        local liding_output
+        liding_output, liding_changed = convert_default(chars, map)
+        if not changed and liding_changed then
+          text = liding_output
+          changed = true
+        end
+      end
+      if changed then
+        local comment = build_comment(cand.comment, cand.text, original_changed and cand.text or liding_text)
+        local variants = nil
+        if env.single_char_variants and #original_chars == 1 then
+          variants = map[original_chars[1]]
+        end
+
+        if variants and #variants > 1 then
+          local limit = math.min(#variants, env.max_variants)
+          for index = 1, limit do
+            yield(Candidate(cand.type, cand.start, cand._end, variants[index], comment .. " " .. index .. "/" .. #variants))
+          end
+        else
+          yield(Candidate(cand.type, cand.start, cand._end, text, comment))
+        end
+      else
+        yield(cand)
+      end
     end
   end
 end
