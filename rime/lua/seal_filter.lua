@@ -232,11 +232,33 @@ local function config_int(config, key, default)
   return value
 end
 
+local function config_string(config, name_space, key, default)
+  if not config or not config.get_string then
+    return default
+  end
+
+  local keys = {}
+  if name_space and name_space ~= "" then
+    keys[#keys + 1] = name_space .. "/" .. key
+  end
+  keys[#keys + 1] = "seal_filter/" .. key
+  keys[#keys + 1] = key
+
+  for _, full_key in ipairs(keys) do
+    local value = config:get_string(full_key)
+    if value and value ~= "" then
+      return value
+    end
+  end
+
+  return default
+end
+
 function M.init(env)
   local config = env.engine.schema.config
-  local map_file = config:get_string(env.name_space .. "/map_file") or "seal_map.tsv"
-  local liding_map_file = config:get_string(env.name_space .. "/liding_map_file") or "opencc/SealVariants.txt"
-  local extra_liding_map_file = config:get_string(env.name_space .. "/extra_liding_map_file")
+  local map_file = config_string(config, env.name_space, "map_file", "seal_map.tsv")
+  local liding_map_file = config_string(config, env.name_space, "liding_map_file", "opencc/SealVariants.txt")
+  local extra_liding_map_file = config_string(config, env.name_space, "extra_liding_map_file", "custom_liding.tsv")
   env.seal_map = read_map(join_path(data_dir(), map_file))
   env.liding_map, env.liding_max_key_len = read_liding_map(join_path(data_dir(), liding_map_file))
   if extra_liding_map_file and extra_liding_map_file ~= "" then
