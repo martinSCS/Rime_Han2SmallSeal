@@ -235,7 +235,7 @@ seal_filter:
   max_variants: 9
 ```
 
-候选文本会被替换为小篆，候选注释会保留中间候选文本。映射表没有覆盖到的字符会保持原样。派生 schema 始终输出小篆；普通输入切回原方案。
+候选文本会被替换为小篆，候选注释会显示原候选文本；如果 OpenCC `SealVariants.txt` 使用的 SealSources 代表字不同，注释会显示为 `原候选 -> SealSources代表字`。映射表没有覆盖到的字符会保持原样。派生 schema 始终输出小篆；普通输入切回原方案。
 
 可以在派生 schema 里调整：
 

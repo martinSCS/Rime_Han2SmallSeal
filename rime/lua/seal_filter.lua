@@ -144,6 +144,21 @@ local function convert_default(chars, map)
   return table.concat(out), changed
 end
 
+local function build_comment(base_comment, original_text, liding_text)
+  local parts = {}
+  if base_comment and base_comment ~= "" then
+    parts[#parts + 1] = base_comment
+  end
+
+  if liding_text and liding_text ~= original_text then
+    parts[#parts + 1] = original_text .. " -> " .. liding_text
+  else
+    parts[#parts + 1] = original_text
+  end
+
+  return table.concat(parts, " ")
+end
+
 local function config_bool(config, key, default)
   if not config or not config.get_bool then
     return default
@@ -194,14 +209,10 @@ function M.func(input, env)
   for cand in input:iter() do
     local original_chars = collect_chars(cand.text)
     local chars = apply_liding(original_chars, env.liding_map, env.liding_max_key_len or 0)
+    local liding_text = table.concat(chars)
     local text, changed = convert_default(chars, map)
     if changed then
-      local comment = cand.comment or ""
-      if comment == "" then
-        comment = cand.text
-      else
-        comment = comment .. " " .. cand.text
-      end
+      local comment = build_comment(cand.comment, cand.text, liding_text)
       local variants = nil
       if env.single_char_variants and #chars == 1 then
         variants = map[chars[1]]
