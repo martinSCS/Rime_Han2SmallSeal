@@ -91,6 +91,7 @@ def append_config(lines: list[str]) -> list[str]:
         "seal_filter:",
         "  map_file: seal_map.tsv",
         "  liding_map_file: opencc/SealVariants.txt",
+        "  extra_liding_map_file: custom_liding.tsv",
         "  single_char_variants: true",
         "  max_variants: 9",
     ]

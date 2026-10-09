@@ -43,6 +43,7 @@
    New-Item -ItemType Directory -Force "$env:APPDATA\Rime\opencc"
 
    Copy-Item rime\seal_map.tsv "$env:APPDATA\Rime\seal_map.tsv"
+   Copy-Item rime\custom_liding.tsv "$env:APPDATA\Rime\custom_liding.tsv"
    Copy-Item rime\lua\seal_filter.lua "$env:APPDATA\Rime\lua\seal_filter.lua"
    Copy-Item rime\opencc\SealVariants.txt "$env:APPDATA\Rime\opencc\SealVariants.txt"
    ```
@@ -118,6 +119,7 @@
    mkdir -p ~/Library/Rime/opencc
 
    cp rime/seal_map.tsv ~/Library/Rime/seal_map.tsv
+   cp rime/custom_liding.tsv ~/Library/Rime/custom_liding.tsv
    cp rime/lua/seal_filter.lua ~/Library/Rime/lua/seal_filter.lua
    cp rime/opencc/SealVariants.txt ~/Library/Rime/opencc/SealVariants.txt
    ```
@@ -231,11 +233,12 @@ engine:
 seal_filter:
   map_file: seal_map.tsv
   liding_map_file: opencc/SealVariants.txt
+  extra_liding_map_file: custom_liding.tsv
   single_char_variants: true
   max_variants: 9
 ```
 
-候选文本会被替换为小篆，候选注释会显示原候选文本；如果 OpenCC `SealVariants.txt` 使用的 SealSources 代表字不同，注释会显示为 `原候选（SealSources代表字）`。映射表没有覆盖到的字符会保持原样。派生 schema 始终输出小篆；普通输入切回原方案。
+候选文本会被替换为小篆，候选注释会显示原候选文本；如果 OpenCC `SealVariants.txt` 或 `custom_liding.tsv` 使用的 SealSources 代表字不同，注释会显示为 `原候选（SealSources代表字）`。映射表没有覆盖到的字符会保持原样。派生 schema 始终输出小篆；普通输入切回原方案。
 
 可以在派生 schema 里调整：
 
