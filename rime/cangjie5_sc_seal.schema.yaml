@@ -55,7 +55,6 @@ engine:
     - lua_filter@*seal_filter
     - simplifier
     - uniquifier
-    - single_char_filter
 
 speller:
   alphabet: zyxwvutsrqponmlkjihgfedcba

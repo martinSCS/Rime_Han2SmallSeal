@@ -90,11 +90,15 @@ def insert_filters(lines: list[str]) -> list[str]:
     for index, line in enumerate(lines):
         if line.strip() == "filters:":
             end = find_section_end(lines, index)
-            block = lines[index + 1 : end]
+            block = [
+                item
+                for item in lines[index + 1 : end]
+                if "single_char_filter" not in item
+            ]
             additions = []
             if not any("lua_filter@*seal_filter" in item for item in block):
                 additions.append("    - lua_filter@*seal_filter")
-            return lines[: index + 1] + additions + lines[index + 1 :]
+            return lines[: index + 1] + additions + block + lines[end:]
 
     raise SystemExit("Could not find engine/filters in the source schema.")
 
