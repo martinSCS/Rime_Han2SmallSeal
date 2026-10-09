@@ -10,6 +10,14 @@
 
 `seal_map.tsv` 会保留一个现代汉字对应的多个小篆变体。单字候选会展开为多个小篆候选；词语候选默认使用每个字的第一个小篆形，避免多字变体组合爆炸。
 
+`custom_liding.tsv` 用来补充常用字到 SealSources 代表字的映射。当 Unicode `SealSources.txt` 选用的隶定字不是日常输入时常用的字形时，可以在这里手动指定。例如：
+
+```text
+友	㕛
+```
+
+这样输入法候选原本给出 `友` 时，除了 `友` 在 SealSources 中直接对应的小篆，也会额外尝试 `㕛` 对应的小篆；候选注释会显示为 `友（㕛）`。
+
 默认生成独立的 `<schema_id>_seal.schema.yaml`。原输入方案保持不变，需要普通输入时切回原方案，需要小篆输出时切到小篆方案。
 
 ## 安装
@@ -183,6 +191,15 @@
 - `opencc/SealVariants.txt` 来自 OpenCC，许可证为 Apache-2.0。上游文件：<https://github.com/BYVoid/OpenCC/blob/master/data/dictionary/SealVariants.txt>
 - `seal_map.tsv` 是由 Unicode `SealSources.txt` 生成的小篆映射表。Unicode 数据文件受 Unicode License v3 约束。许可说明：<https://www.unicode.org/copyright.html>
 
+`custom_liding.tsv` 是本项目提供的人工补充表，不是第三方数据。它的格式是一行一条映射，第一列为输入方案产出的常用字，第二列为要额外尝试的 SealSources 代表字，中间用 Tab 分隔：
+
+```text
+# source	target
+友	㕛
+```
+
+可以按需要继续添加映射。添加后重新部署 Rime 即可生效。
+
 ## 重新生成数据文件
 
 ### Windows
@@ -223,11 +240,13 @@ python3 scripts/build_rime_seal_map.py \
 
 ## 模板内容
 
-派生 schema 的核心变化是在候选过滤链前面插入 Lua filter：
+派生 schema 的核心变化是在候选过滤链最后插入 Lua filter。原方案自己的简繁转换、去重等 filter 会先运行，小篆转换最后处理候选：
 
 ```yaml
 engine:
   filters:
+    - simplifier
+    - uniquifier
     - lua_filter@*seal_filter
 
 seal_filter:
