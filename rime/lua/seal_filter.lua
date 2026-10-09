@@ -151,7 +151,7 @@ local function build_comment(base_comment, original_text, liding_text)
   end
 
   if liding_text and liding_text ~= original_text then
-    parts[#parts + 1] = original_text .. " -> " .. liding_text
+    parts[#parts + 1] = original_text .. "（" .. liding_text .. "）"
   else
     parts[#parts + 1] = original_text
   end
