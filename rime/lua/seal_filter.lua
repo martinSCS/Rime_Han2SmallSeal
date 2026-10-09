@@ -43,6 +43,34 @@ local function read_map(path)
   return map
 end
 
+local function read_liding_map(path)
+  local map = {}
+  local max_key_len = 0
+  local file = io.open(path, "r")
+  if not file then
+    return map, max_key_len
+  end
+
+  for line in file:lines() do
+    if line ~= "" and line:sub(1, 1) ~= "#" then
+      local source, target = line:match("^([^\t]+)\t([^\t]+)")
+      if source and target then
+        map[source] = target
+        local len = 0
+        for _ in source:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
+          len = len + 1
+        end
+        if len > max_key_len then
+          max_key_len = len
+        end
+      end
+    end
+  end
+
+  file:close()
+  return map, max_key_len
+end
+
 local function utf8_chars(text)
   return text:gmatch("[%z\1-\127\194-\244][\128-\191]*")
 end
@@ -53,6 +81,50 @@ local function collect_chars(text)
     chars[#chars + 1] = char
   end
   return chars
+end
+
+local function concat_chars(chars, start_index, end_index)
+  local out = {}
+  for index = start_index, end_index do
+    out[#out + 1] = chars[index]
+  end
+  return table.concat(out)
+end
+
+local function apply_liding(chars, map, max_key_len)
+  if not map or max_key_len < 1 then
+    return chars
+  end
+
+  local out = {}
+  local index = 1
+  while index <= #chars do
+    local matched = nil
+    local matched_len = 0
+    local limit = math.min(max_key_len, #chars - index + 1)
+
+    for len = limit, 1, -1 do
+      local key = concat_chars(chars, index, index + len - 1)
+      local replacement = map[key]
+      if replacement then
+        matched = replacement
+        matched_len = len
+        break
+      end
+    end
+
+    if matched then
+      for char in utf8_chars(matched) do
+        out[#out + 1] = char
+      end
+      index = index + matched_len
+    else
+      out[#out + 1] = chars[index]
+      index = index + 1
+    end
+  end
+
+  return out
 end
 
 local function convert_default(chars, map)
@@ -101,7 +173,9 @@ end
 function M.init(env)
   local config = env.engine.schema.config
   local map_file = config:get_string(env.name_space .. "/map_file") or "seal_map.tsv"
+  local liding_map_file = config:get_string(env.name_space .. "/liding_map_file") or "opencc/SealVariants.txt"
   env.seal_map = read_map(join_path(data_dir(), map_file))
+  env.liding_map, env.liding_max_key_len = read_liding_map(join_path(data_dir(), liding_map_file))
   env.option_name = config:get_string(env.name_space .. "/option_name")
   env.single_char_variants = config_bool(config, env.name_space .. "/single_char_variants", true)
   env.max_variants = config_int(config, env.name_space .. "/max_variants", 9)
@@ -118,7 +192,8 @@ function M.func(input, env)
   local map = env.seal_map or {}
 
   for cand in input:iter() do
-    local chars = collect_chars(cand.text)
+    local original_chars = collect_chars(cand.text)
+    local chars = apply_liding(original_chars, env.liding_map, env.liding_max_key_len or 0)
     local text, changed = convert_default(chars, map)
     if changed then
       local comment = cand.comment or ""

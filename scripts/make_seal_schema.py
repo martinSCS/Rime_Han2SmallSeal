@@ -75,8 +75,6 @@ def insert_filters(lines: list[str]) -> list[str]:
             end = find_section_end(lines, index)
             block = lines[index + 1 : end]
             additions = []
-            if not any("simplifier@seal_liding" in item for item in block):
-                additions.append("    - simplifier@seal_liding")
             if not any("lua_filter@*seal_filter" in item for item in block):
                 additions.append("    - lua_filter@*seal_filter")
             return lines[: index + 1] + additions + lines[index + 1 :]
@@ -85,17 +83,14 @@ def insert_filters(lines: list[str]) -> list[str]:
 
 
 def append_config(lines: list[str]) -> list[str]:
-    if any(line.startswith("seal_liding:") for line in lines):
+    if any(line.startswith("seal_filter:") for line in lines):
         return lines
 
     block = [
         "",
-        "seal_liding:",
-        "  opencc_config: seal_liding.json",
-        "  tips: all",
-        "",
         "seal_filter:",
         "  map_file: seal_map.tsv",
+        "  liding_map_file: opencc/SealVariants.txt",
         "  single_char_variants: true",
         "  max_variants: 9",
     ]
