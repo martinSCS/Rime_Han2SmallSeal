@@ -1,6 +1,6 @@
-# Rime 小篆输出层模板
+# Rime 小篆派生方案模板
 
-这套配置是一个可叠加到现有 Rime 方案上的“小篆输出层”。原输入方案继续负责编码、分词、候选和词库；小篆输出层只接管候选过滤：
+这套配置用于从现有 Rime 方案派生一个小篆输入方案。原方案继续保留普通输出；派生方案复用原方案的编码、分词、候选和词库，只在候选过滤阶段把普通汉字转换为 Unicode 小篆字符：
 
 ```text
 任意 Rime 方案候选
@@ -9,6 +9,8 @@
 ```
 
 `seal_map.tsv` 会保留一个现代汉字对应的多个小篆变体。单字候选会展开为多个小篆候选；词语候选默认使用每个字的第一个小篆形，避免多字变体组合爆炸。
+
+默认生成独立的 `<schema_id>_seal.schema.yaml`。原输入方案保持不变，需要普通输入时切回原方案，需要小篆输出时切到小篆方案。
 
 ## 安装
 
@@ -61,21 +63,45 @@
    Copy-Item rime\opencc\SealVariants.ocd2 "$env:APPDATA\Rime\opencc\SealVariants.ocd2"
    ```
 
-4. 给目标输入方案生成 custom 补丁。
+4. 生成小篆派生 schema。
 
    例如给朙月拼音加小篆输出：
 
    ```powershell
-   python scripts\make_seal_patch.py luna_pinyin -o "$env:APPDATA\Rime\luna_pinyin.custom.yaml"
+   python scripts\make_seal_schema.py `
+     -i "$env:APPDATA\Rime\luna_pinyin.schema.yaml" `
+     -o "$env:APPDATA\Rime\luna_pinyin_seal.schema.yaml"
    ```
 
    例如给仓颉五代加小篆输出：
 
    ```powershell
-   python scripts\make_seal_patch.py cangjie5 -o "$env:APPDATA\Rime\cangjie5.custom.yaml"
+   python scripts\make_seal_schema.py `
+     -i "$env:APPDATA\Rime\cangjie5.schema.yaml" `
+     -o "$env:APPDATA\Rime\cangjie5_seal.schema.yaml"
    ```
 
-5. 重新部署小狼毫。
+   如果原方案的 `.schema.yaml` 不在用户目录，需要先把该方案文件复制到用户目录，或把 `-i` 指向实际文件路径。
+
+5. 把小篆方案加入方案列表。
+
+   在 `%APPDATA%\Rime\default.custom.yaml` 中加入：
+
+   ```yaml
+   patch:
+     schema_list/+:
+       - schema: luna_pinyin_seal
+   ```
+
+   仓颉五代则改为：
+
+   ```yaml
+   patch:
+     schema_list/+:
+       - schema: cangjie5_seal
+   ```
+
+6. 重新部署小狼毫。
 
    从开始菜单或托盘菜单选择“重新部署”。
 
@@ -126,21 +152,45 @@
    cp rime/opencc/SealVariants.ocd2 ~/Library/Rime/opencc/SealVariants.ocd2
    ```
 
-4. 给目标输入方案生成 custom 补丁。
+4. 生成小篆派生 schema。
 
    例如给朙月拼音加小篆输出：
 
    ```sh
-   python3 scripts/make_seal_patch.py luna_pinyin -o ~/Library/Rime/luna_pinyin.custom.yaml
+   python3 scripts/make_seal_schema.py \
+     -i ~/Library/Rime/luna_pinyin.schema.yaml \
+     -o ~/Library/Rime/luna_pinyin_seal.schema.yaml
    ```
 
    例如给仓颉五代加小篆输出：
 
    ```sh
-   python3 scripts/make_seal_patch.py cangjie5 -o ~/Library/Rime/cangjie5.custom.yaml
+   python3 scripts/make_seal_schema.py \
+     -i ~/Library/Rime/cangjie5.schema.yaml \
+     -o ~/Library/Rime/cangjie5_seal.schema.yaml
    ```
 
-5. 重新部署鼠须管。
+   如果原方案的 `.schema.yaml` 不在用户目录，需要先把该方案文件复制到用户目录，或把 `-i` 指向实际文件路径。
+
+5. 把小篆方案加入方案列表。
+
+   在 `~/Library/Rime/default.custom.yaml` 中加入：
+
+   ```yaml
+   patch:
+     schema_list/+:
+       - schema: luna_pinyin_seal
+   ```
+
+   仓颉五代则改为：
+
+   ```yaml
+   patch:
+     schema_list/+:
+       - schema: cangjie5_seal
+   ```
+
+6. 重新部署鼠须管。
 
    从输入法菜单选择“重新部署”，或运行：
 
@@ -148,10 +198,7 @@
    /Library/Input\ Methods/Squirrel.app/Contents/MacOS/Squirrel --reload
    ```
 
-`examples/` 里有已经命名好的示例：
-
-- `examples/cangjie5_seal.custom.yaml`
-- `examples/luna_pinyin_seal.custom.yaml`
+仓颉五代也提供独立方案文件 `cangjie5_seal.schema.yaml`，可直接作为示例使用。
 
 ## 字体
 
@@ -164,7 +211,6 @@
 - `opencc/SealVariants.txt` 来自 OpenCC，许可证为 Apache-2.0。上游文件：<https://github.com/BYVoid/OpenCC/blob/master/data/dictionary/SealVariants.txt>
 - `opencc/SealVariants.ocd2` 是由 `opencc/SealVariants.txt` 编译得到的 OpenCC 二进制字典。
 - `seal_map.tsv` 是由 Unicode `SealSources.txt` 生成的小篆映射表。Unicode 数据文件受 Unicode License v3 约束。许可说明：<https://www.unicode.org/copyright.html>
-```
 
 ## 重新生成数据文件
 
@@ -218,37 +264,29 @@ python3 scripts/build_rime_seal_map.py \
 
 ## 模板内容
 
-`seal_output.custom.yaml.template` 的核心是：
+派生 schema 的核心变化是在候选过滤链前面插入 OpenCC 和 Lua filter：
 
 ```yaml
-patch:
-  switches/+:
-    - name: seal_liding
-      reset: 1
-      states: [ 原字, 隸定 ]
+engine:
+  filters:
+    - simplifier@seal_liding
+    - lua_filter@*seal_filter
 
-  engine/filters/@before 0: simplifier@seal_liding
-  engine/filters/@before 1: lua_filter@*seal_filter
+seal_liding:
+  opencc_config: seal_liding.json
+  tips: all
 
-  seal_liding/opencc_config: seal_liding.json
-  seal_liding/option_name: seal_liding
-  seal_liding/tips: all
-
-  seal_filter/map_file: seal_map.tsv
-  seal_filter/single_char_variants: true
-  seal_filter/max_variants: 9
+seal_filter:
+  map_file: seal_map.tsv
+  single_char_variants: true
+  max_variants: 9
 ```
 
-候选文本会被替换为小篆，候选注释会保留中间候选文本。映射表没有覆盖到的字符会保持原样。
+候选文本会被替换为小篆，候选注释会保留中间候选文本。映射表没有覆盖到的字符会保持原样。派生 schema 始终输出小篆；普通输入切回原方案。
 
-可以在 custom patch 或独立 schema 里调整：
+可以在派生 schema 里调整：
 
 ```yaml
-switches:
-  - name: seal_liding
-    reset: 1
-    states: [ 原字, 隸定 ]
-
 seal_filter:
   single_char_variants: true
   max_variants: 9

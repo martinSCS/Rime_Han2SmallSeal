@@ -102,11 +102,19 @@ function M.init(env)
   local config = env.engine.schema.config
   local map_file = config:get_string(env.name_space .. "/map_file") or "seal_map.tsv"
   env.seal_map = read_map(join_path(data_dir(), map_file))
+  env.option_name = config:get_string(env.name_space .. "/option_name")
   env.single_char_variants = config_bool(config, env.name_space .. "/single_char_variants", true)
   env.max_variants = config_int(config, env.name_space .. "/max_variants", 9)
 end
 
 function M.func(input, env)
+  if env.option_name and not env.engine.context:get_option(env.option_name) then
+    for cand in input:iter() do
+      yield(cand)
+    end
+    return
+  end
+
   local map = env.seal_map or {}
 
   for cand in input:iter() do

@@ -1,0 +1,14 @@
+.DS_Store
+__MACOSX/
+
+# Downloaded Unicode/OpenCC source data
+SealSources.txt
+rime/opencc/SealVariants.txt
+
+# Generated runtime data
+rime/seal_map.tsv
+rime/opencc/SealVariants.ocd2
+
+# Local packages / scratch exports
+*.zip
+rime/luna_pinyin/

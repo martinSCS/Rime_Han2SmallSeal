@@ -1,0 +1,71 @@
+schema:
+  schema_id: cangjie5_seal
+  name: "倉頡五代・小篆"
+  version: "0.1"
+
+switches:
+  - name: ascii_mode
+    reset: 0
+    states: [ 中文, 西文 ]
+  - name: full_shape
+    states: [ 半角, 全角 ]
+  - name: ascii_punct
+    states: [ 。，, ．， ]
+
+engine:
+  processors:
+    - ascii_composer
+    - recognizer
+    - key_binder
+    - speller
+    - punctuator
+    - selector
+    - navigator
+    - express_editor
+  segmentors:
+    - ascii_segmentor
+    - matcher
+    - abc_segmentor
+    - punct_segmentor
+    - fallback_segmentor
+  translators:
+    - punct_translator
+    - table_translator
+  filters:
+    - simplifier@seal_liding
+    - lua_filter@*seal_filter
+    - uniquifier
+
+speller:
+  alphabet: zyxwvutsrqponmlkjihgfedcba
+  delimiter: " '"
+  max_code_length: 5
+  auto_select: true
+
+translator:
+  dictionary: cangjie5
+  prism: cangjie5_seal
+  enable_charset_filter: false
+  enable_completion: true
+  enable_sentence: true
+  enable_encoder: true
+  encode_commit_history: true
+  max_phrase_length: 5
+
+seal_liding:
+  opencc_config: seal_liding.json
+  tips: all
+
+seal_filter:
+  map_file: seal_map.tsv
+  single_char_variants: true
+  max_variants: 9
+
+punctuator:
+  import_preset: default
+
+key_binder:
+  import_preset: default
+
+recognizer:
+  import_preset: default
