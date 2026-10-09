@@ -58,12 +58,12 @@
      -o "$env:APPDATA\Rime\luna_pinyin_seal.schema.yaml"
    ```
 
-   例如给仓颉五代加小篆输出：
+   例如给仓颉五代 SC 加小篆输出：
 
    ```powershell
    python scripts\make_seal_schema.py `
-     -i "$env:APPDATA\Rime\cangjie5.schema.yaml" `
-     -o "$env:APPDATA\Rime\cangjie5_seal.schema.yaml"
+     -i "$env:APPDATA\Rime\cangjie5_sc.schema.yaml" `
+     -o "$env:APPDATA\Rime\cangjie5_sc_seal.schema.yaml"
    ```
 
    如果原方案的 `.schema.yaml` 不在用户目录，需要先把该方案文件复制到用户目录，或把 `-i` 指向实际文件路径。
@@ -78,12 +78,12 @@
        - schema: luna_pinyin_seal
    ```
 
-   仓颉五代则改为：
+   仓颉五代 SC 则改为：
 
    ```yaml
    patch:
      schema_list/+:
-       - schema: cangjie5_seal
+       - schema: cangjie5_sc_seal
    ```
 
 5. 重新部署小狼毫。
@@ -134,12 +134,12 @@
      -o ~/Library/Rime/luna_pinyin_seal.schema.yaml
    ```
 
-   例如给仓颉五代加小篆输出：
+   例如给仓颉五代 SC 加小篆输出：
 
    ```sh
    python3 scripts/make_seal_schema.py \
-     -i ~/Library/Rime/cangjie5.schema.yaml \
-     -o ~/Library/Rime/cangjie5_seal.schema.yaml
+     -i ~/Library/Rime/cangjie5_sc.schema.yaml \
+     -o ~/Library/Rime/cangjie5_sc_seal.schema.yaml
    ```
 
    如果原方案的 `.schema.yaml` 不在用户目录，需要先把该方案文件复制到用户目录，或把 `-i` 指向实际文件路径。
@@ -154,12 +154,12 @@
        - schema: luna_pinyin_seal
    ```
 
-   仓颉五代则改为：
+   仓颉五代 SC 则改为：
 
    ```yaml
    patch:
      schema_list/+:
-       - schema: cangjie5_seal
+       - schema: cangjie5_sc_seal
    ```
 
 5. 重新部署鼠须管。
@@ -170,7 +170,7 @@
    /Library/Input\ Methods/Squirrel.app/Contents/MacOS/Squirrel --reload
    ```
 
-仓颉五代也提供独立方案文件 `cangjie5_seal.schema.yaml`，可直接作为示例使用。
+仓颉五代 SC 也提供独立方案文件 `cangjie5_sc_seal.schema.yaml`，可直接作为示例使用。
 
 ## 字体
 

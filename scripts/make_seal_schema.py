@@ -57,16 +57,33 @@ def replace_schema_fields(lines: list[str], schema_id: str, name: str) -> list[s
     return out
 
 
-def replace_prism(lines: list[str], schema_id: str) -> list[str]:
-    out = []
-    for line in lines:
-        stripped = line.strip()
-        indent = line[: len(line) - len(line.lstrip())]
-        if stripped.startswith("prism:"):
-            out.append(f"{indent}prism: {schema_id}")
-        else:
-            out.append(line)
-    return out
+def replace_translator_prism(lines: list[str], schema_id: str) -> list[str]:
+    out = lines[:]
+    for index, line in enumerate(out):
+        if line.startswith("translator:"):
+            end = find_section_end(out, index)
+            dictionary_index = None
+            prism_index = None
+            indent = "  "
+            for item_index in range(index + 1, end):
+                stripped = out[item_index].strip()
+                item_indent = out[item_index][: len(out[item_index]) - len(out[item_index].lstrip())]
+                if stripped.startswith("dictionary:"):
+                    dictionary_index = item_index
+                    indent = item_indent
+                elif stripped.startswith("prism:"):
+                    prism_index = item_index
+                    indent = item_indent
+
+            if prism_index is not None:
+                out[prism_index] = f"{indent}prism: {schema_id}"
+            elif dictionary_index is not None:
+                out.insert(dictionary_index + 1, f"{indent}prism: {schema_id}")
+            else:
+                raise SystemExit("Could not find translator/dictionary in the source schema.")
+            return out
+
+    raise SystemExit("Could not find translator in the source schema.")
 
 
 def insert_filters(lines: list[str]) -> list[str]:
@@ -128,7 +145,7 @@ def main() -> None:
     name = args.name or f"{source_name}・小篆"
 
     lines = replace_schema_fields(source_lines, schema_id, name)
-    lines = replace_prism(lines, schema_id)
+    lines = replace_translator_prism(lines, schema_id)
     lines = insert_filters(lines)
     lines = append_config(lines)
 
